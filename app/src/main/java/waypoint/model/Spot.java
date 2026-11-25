@@ -1,59 +1,54 @@
 
 package waypoint.model;
 
-import java.util.Objects;
+public class Spot {
 
-/** ENTITY. Identity = id. Invariant: a spot cannot be assigned while occupied. */
+    private final SpotType type;
+    private final int level;
+    private final int distanceFromGate;
 
-public final class Spot {
-    private final SpotId id;
-    private VehicleId occupant;   // the ONLY mutable field
+    private boolean free = true;
 
-    // Constructor
-    public Spot(SpotId id) {
-        this.id = Objects.requireNonNull(id, "Spot ID cannot be null");
+    public Spot(SpotType type, int level, int distanceFromGate) {
+        if (type == null) {
+            throw new IllegalArgumentException("Spot type cannot be null");
+        }
+
+        if (level < 0 || distanceFromGate < 0) {
+            throw new IllegalArgumentException("Invalid spot location");
+        }
+
+        this.type = type;
+        this.level = level;
+        this.distanceFromGate = distanceFromGate;
     }
 
-    // Assign a vehicle only if the spot is free
-    public boolean tryAssign(VehicleId v) {
-        Objects.requireNonNull(v, "Vehicle ID cannot be null");
+    public SpotType type() {
+        return type;
+    }
 
-        if (occupant != null) {
+    public int level() {
+        return level;
+    }
+
+    public int distanceFromGate() {
+        return distanceFromGate;
+    }
+
+    public synchronized boolean isFree() {
+        return free;
+    }
+
+    public synchronized boolean occupy() {
+        if (!free) {
             return false;
         }
 
-        occupant = v;
+        free = false;
         return true;
     }
 
-    // Release a vehicle
-    public void release(VehicleId v) {
-        if (occupant != null && occupant.equals(v)) {
-            occupant = null;
-        }
-    }
-
-    // Check whether spot is free
-    public boolean isFree() {
-        return occupant == null;
-    }
-
-    // Equality based only on ID
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-
-        if (!(obj instanceof Spot other)) {
-            return false;
-        }
-
-        return id.equals(other.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
+    public synchronized void release() {
+        free = true;
     }
 }
